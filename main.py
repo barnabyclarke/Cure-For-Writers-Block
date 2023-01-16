@@ -3,19 +3,25 @@ from tkinter import *
 from tkinter import ttk
 
 BACKGROUND_COLOUR = "#1B4F72"
-WORD_LIST = (150, 250, 350, 500, 750, 1000, 2000)
+WORD_LIST = (100, 250, 350, 500, 750, 1000, 2000)
 TIME_LIST = (3, 5, 7, 10, 15, 20, 25)
 WORD_COUNT = 0
 CHOICE = ""
 TIMER = ""
 TYPE_TIMER = ""
+RUN_CHECK = True
 
 
 def restart():
+    global TIMER, TYPE_TIMER, RUN_CHECK
+    RUN_CHECK = True
     if TIMER != "":
         window.after_cancel(TIMER)
+        TIMER = ""
     if TYPE_TIMER != "":
         window.after_cancel(TYPE_TIMER)
+        TYPE_TIMER = ""
+    text_box.delete("1.0", END)
     text_box.grid_forget()
     text_box.selection_clear()
     restart_button.grid_forget()
@@ -70,33 +76,35 @@ def start(*args):
 
 
 def key_input(event=None):
-    global TYPE_TIMER, WORD_COUNT
+    global TYPE_TIMER, WORD_COUNT, RUN_CHECK
     if CHOICE > 25:
         WORD_COUNT = len(text_box.get("1.0", END).split(" "))
         canvas.itemconfig(timer_text, text=f"Words: {WORD_COUNT}/{CHOICE}")
-        if WORD_COUNT == CHOICE:
+        if WORD_COUNT >= CHOICE:  # COMPLETION
             canvas.itemconfig(title, text='Well done!')
-            window.after_cancel(TYPE_TIMER)
+            canvas.itemconfig(instructions, text="Keep going if you can. You will not lose this text now.")
             text_box.unbind_all("<Key>")
+            RUN_CHECK = False
 
-    if TYPE_TIMER != "":
+    if TYPE_TIMER != "":  # Reset on each key entry
         window.after_cancel(TYPE_TIMER)
         TYPE_TIMER = ""
 
-    type_counter(5)
+    type_counter(5, RUN_CHECK)
 
 
-def type_counter(count):
+def type_counter(count, run_check):
     global TYPE_TIMER
-    if int(count) > 0:
-        TYPE_TIMER = window.after(1000, type_counter, count - 1)
-    else:
-        text_box.delete("1.0", END)
-        canvas.itemconfig(timer_text, text=f"Words: 0/{CHOICE}")
+    if run_check:
+        if int(count) > 0:
+            TYPE_TIMER = window.after(1000, type_counter, count - 1, RUN_CHECK)
+        else:
+            text_box.delete("1.0", END)
+            canvas.itemconfig(timer_text, text=f"Words: 0/{CHOICE}")
 
 
 def counter(count):
-    global TIMER
+    global TIMER, TYPE_TIMER, RUN_CHECK
     if radbut_choice.get() == 'time':
         count_min = math.floor(count / 60)
         count_sec = count % 60
@@ -105,9 +113,11 @@ def counter(count):
         if count > 0:
             canvas.itemconfig(timer_text, text=f'Time: {count_min}:{count_sec}')
             TIMER = window.after(1000, counter, count - 1)
-        else:
+        else:  # COMPLETION
             canvas.itemconfig(title, text='Well done!')
-            window.after_cancel(TYPE_TIMER)
+            canvas.itemconfig(instructions, text="Keep going if you can. You will not lose this text now.")
+            canvas.itemconfig(timer_text, text="Time: --:--")
+            RUN_CHECK = False
             text_box.unbind_all("<Key>")
 
 
@@ -143,7 +153,7 @@ list_box = Listbox(height=7, activestyle="none")
 start_button = Button(text="Begin Test", font=('Ariel', 20, 'bold'), background="white", command=start)
 restart_button = Button(text="Restart", font=('Ariel', 10, 'bold'), background="white", command=restart)
 
-# Textbox
+# Textbox & Scrollbar
 scroll = Scrollbar()
 text_box = Text(borderwidth=0, background=BACKGROUND_COLOUR, relief="flat", wrap="word", font=("Ariel", 15, "normal"),
                 width=70, height=15, fg="white", insertbackground="white", yscrollcommand=scroll.set)
