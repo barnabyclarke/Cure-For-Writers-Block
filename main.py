@@ -72,6 +72,7 @@ def start(*args):
 
     canvas.itemconfig(instructions, text="Don't be too slow!")
     text_box.grid(column=1, row=2, columnspan=3, sticky=W)
+    text_box.focus()
     scroll.grid(column=4, row=2, sticky=N + S + W)
     restart_button.grid(column=1, row=4, pady=35, sticky=W)
 
