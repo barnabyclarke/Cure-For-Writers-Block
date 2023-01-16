@@ -5,14 +5,19 @@ from tkinter import ttk
 BACKGROUND_COLOUR = "#1B4F72"
 WORD_LIST = (150, 250, 350, 500, 750, 1000, 2000)
 TIME_LIST = (3, 5, 7, 10, 15, 20, 25)
+WORD_COUNT = 0
+CHOICE = ""
 TIMER = ""
 TYPE_TIMER = ""
 
 
 def restart():
-    window.after_cancel(TIMER)
-    window.after_cancel(TYPE_TIMER)
+    if TIMER != "":
+        window.after_cancel(TIMER)
+    if TYPE_TIMER != "":
+        window.after_cancel(TYPE_TIMER)
     text_box.grid_forget()
+    text_box.selection_clear()
     restart_button.grid_forget()
     scroll.grid_forget()
     canvas.itemconfig(timer_text, text="")
@@ -35,11 +40,12 @@ def start_screen():
 def list_values(radio_choice):
     if radio_choice["text"] == "Word goal":
         return list_box.config(listvariable=word_list_choice)
-    if radio_choice["text"] == "Time limit\n(mins)":
-        return list_box.config(listvariable=time_list_choice)
+
+    return list_box.config(listvariable=time_list_choice)
 
 
 def start(*args):
+    global CHOICE
     list_box.grid_forget()
     start_button.grid_forget()
     word_radbut.grid_forget()
@@ -48,29 +54,35 @@ def start(*args):
 
     value = int(list_box.curselection()[0])
     if radbut_choice.get() == "word":
-        choice = WORD_LIST[value]
+        CHOICE = WORD_LIST[value]
     else:
-        choice = TIME_LIST[value]
+        CHOICE = TIME_LIST[value]
 
-    # Word counter - TODO
-    if choice > 25:
-        canvas.itemconfig(instructions, text="Counting words")
+    if CHOICE > 25:  # Word counter
+        canvas.itemconfig(timer_text, text=f"Words: {WORD_COUNT}/{CHOICE}")
+    else:  # Timer
+        counter(CHOICE * 60)
 
-    # Timer
-    else:
-        canvas.itemconfig(instructions, text="Counting time")
-        counter(choice * 60)
-
+    canvas.itemconfig(instructions, text="Don't be too slow!")
     text_box.grid(column=1, row=2, columnspan=3, sticky=W)
     scroll.grid(column=4, row=2, sticky=N + S + W)
     restart_button.grid(column=1, row=4, pady=35, sticky=W)
 
 
 def key_input(event=None):
-    global TYPE_TIMER
+    global TYPE_TIMER, WORD_COUNT
+    if CHOICE > 25:
+        WORD_COUNT = len(text_box.get("1.0", END).split(" "))
+        canvas.itemconfig(timer_text, text=f"Words: {WORD_COUNT}/{CHOICE}")
+        if WORD_COUNT == CHOICE:
+            canvas.itemconfig(title, text='Well done!')
+            window.after_cancel(TYPE_TIMER)
+            text_box.unbind_all("<Key>")
+
     if TYPE_TIMER != "":
         window.after_cancel(TYPE_TIMER)
         TYPE_TIMER = ""
+
     type_counter(5)
 
 
@@ -80,6 +92,7 @@ def type_counter(count):
         TYPE_TIMER = window.after(1000, type_counter, count - 1)
     else:
         text_box.delete("1.0", END)
+        canvas.itemconfig(timer_text, text=f"Words: 0/{CHOICE}")
 
 
 def counter(count):
@@ -94,7 +107,11 @@ def counter(count):
             TIMER = window.after(1000, counter, count - 1)
         else:
             canvas.itemconfig(title, text='Well done!')
+            window.after_cancel(TYPE_TIMER)
+            text_box.unbind_all("<Key>")
 
+
+# -------------------------------------------------- WINDOW SET UP -------------------------------------------------- #
 
 window = Tk()
 
