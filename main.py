@@ -13,7 +13,8 @@ RUN_CHECK = True
 
 
 def restart():
-    global TIMER, TYPE_TIMER, RUN_CHECK
+    global TIMER, TYPE_TIMER, RUN_CHECK, WORD_COUNT
+    WORD_COUNT = 0
     RUN_CHECK = True
     if TIMER != "":
         window.after_cancel(TIMER)
@@ -80,13 +81,12 @@ def key_input(event=None):
     if CHOICE > 25:
         WORD_COUNT = len(text_box.get("1.0", END).split(" "))
         canvas.itemconfig(timer_text, text=f"Words: {WORD_COUNT}/{CHOICE}")
-        if WORD_COUNT >= CHOICE:  # COMPLETION
+        if WORD_COUNT >= CHOICE:  # COMPLETION OF WORD COUNT GOAL
             canvas.itemconfig(title, text='Well done!')
             canvas.itemconfig(instructions, text="Keep going if you can. You will not lose this text now.")
-            text_box.unbind_all("<Key>")
             RUN_CHECK = False
 
-    if TYPE_TIMER != "":  # Reset on each key entry
+    if TYPE_TIMER != "":  # Reset 5s timer on each key entry
         window.after_cancel(TYPE_TIMER)
         TYPE_TIMER = ""
 
@@ -113,12 +113,11 @@ def counter(count):
         if count > 0:
             canvas.itemconfig(timer_text, text=f'Time: {count_min}:{count_sec}')
             TIMER = window.after(1000, counter, count - 1)
-        else:  # COMPLETION
+        else:  # COMPLETION OF TIME GOAL
             canvas.itemconfig(title, text='Well done!')
             canvas.itemconfig(instructions, text="Keep going if you can. You will not lose this text now.")
             canvas.itemconfig(timer_text, text="Time: --:--")
             RUN_CHECK = False
-            text_box.unbind_all("<Key>")
 
 
 # -------------------------------------------------- WINDOW SET UP -------------------------------------------------- #
